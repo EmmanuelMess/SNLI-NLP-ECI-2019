@@ -14,7 +14,7 @@ def processDataFile(resultPath, sourcePath):
         with jsonlines.open(sourcePath) as reader:
             for obj in reader:
                 read = reader.read(dict)
-                file.write(labels[read["annotator_labels"][0]] + " " + read["sentence1"] + "\n")
+                file.write(labels[read["annotator_labels"][0]] + " " + read["sentence2"] + "\n")
 
 
 def recreate():
@@ -31,7 +31,7 @@ def recreate():
 if __name__ == '__main__':
     createPath = ".data/.created"
     if not os.path.isfile(createPath):
-        open(createPath, "w")
+        #open(createPath, "w")
         recreate()
 
     model = fasttext.load_model("./.data/model_filename.bin")
