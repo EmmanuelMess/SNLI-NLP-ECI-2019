@@ -1,24 +1,54 @@
-import torch
+import os
 
-from torchtext import data
+import fasttext
+import jsonlines
+
 from torchtext import datasets
 
-from  util import get_args
+labels = {"neutral": "__label__0", "contradiction": "__label__1", "entailment": "__label__2"}
+
+
+def processDataFile(resultPath, sourcePath):
+    with open(resultPath, "w") as file:
+        with jsonlines.open(sourcePath) as reader:
+            for obj in reader:
+                read = reader.read(dict)
+                file.write(labels[read["annotator_labels"][0]] + " " + read["sentence1"] + "\n")
+
+
+def recreate():
+    datasets.SNLI.download(".data")
+
+    dataFile = "./.data/data.txt"
+
+    processDataFile(dataFile, '.data/snli/snli_1.0/snli_1.0_train.jsonl')
+
+    # Skipgram model
+    model = fasttext.train_supervised(dataFile)
+    model.save_model("./.data/model_filename.bin")
+
 
 if __name__ == '__main__':
-    args = get_args()
-    if torch.cuda.is_available():
-        torch.cuda.set_device(args.gpu)
-        device = torch.device('cuda:{}'.format(args.gpu))
-        print("With GPU")
-    else:
-        device = torch.device('cpu')
-        print("With CPU")
+    createPath = ".data/.created"
+    if not os.path.isfile(createPath):
+        open(createPath, "w")
+        recreate()
 
-    inputs = data.Field(lower=args.lower)
-    answers = data.Field(sequential=False)
+    model = fasttext.load_model("./.data/model_filename.bin")
 
-    train, validation, test = datasets.SNLI.splits(inputs, answers)
+    correct = 0
+    total = 0
 
-    
+    with jsonlines.open('.data/snli/snli_1.0/snli_1.0_test.jsonl') as reader:
+        for obj in reader:
+            read = reader.read(dict)
 
+            correctLabel = labels[read["annotator_labels"][0]]
+
+            (result, certanty) = model.predict(read["sentence1"])
+            if result[0] == correctLabel:
+                correct += 1
+
+            total += 1
+
+    print(correct/total)
