@@ -24,7 +24,24 @@ def recreate():
 
     processDataFile(dataFile, '.data/snli/snli_1.0/snli_1.0_train.jsonl')
 
-    model = fasttext.train_supervised(dataFile, thread=multiprocessing.cpu_count())
+    model = fasttext.train_supervised(
+        dataFile,
+        #lr=1,
+        dim=325,
+        #ws=5,
+        epoch=10,
+        #minCount=1,
+        #minCountLabel=1,
+        #minn=0,
+        #maxn=0,
+        #neg=5,
+        #wordNgrams=1,
+        #loss="softmax",
+        #bucket=2000000,
+        thread=multiprocessing.cpu_count(),
+        #lrUpdateRate=100,
+        #t=0.0001
+    )
     model.save_model("./.data/model_filename.bin")
 
 
