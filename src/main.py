@@ -1,3 +1,4 @@
+import multiprocessing
 import os
 
 import fasttext
@@ -24,7 +25,7 @@ def recreate():
     processDataFile(dataFile, '.data/snli/snli_1.0/snli_1.0_train.jsonl')
 
     # Skipgram model
-    model = fasttext.train_supervised(dataFile)
+    model = fasttext.train_supervised(dataFile, thread=multiprocessing.cpu_count())
     model.save_model("./.data/model_filename.bin")
 
 
