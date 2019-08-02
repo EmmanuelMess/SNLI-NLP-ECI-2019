@@ -24,7 +24,6 @@ def recreate():
 
     processDataFile(dataFile, '.data/snli/snli_1.0/snli_1.0_train.jsonl')
 
-    # Skipgram model
     model = fasttext.train_supervised(dataFile, thread=multiprocessing.cpu_count())
     model.save_model("./.data/model_filename.bin")
 
@@ -37,19 +36,6 @@ if __name__ == '__main__':
 
     model = fasttext.load_model("./.data/model_filename.bin")
 
-    correct = 0
-    total = 0
+    processDataFile("./.data/test.txt", '.data/snli/snli_1.0/snli_1.0_test.jsonl')
 
-    with jsonlines.open('.data/snli/snli_1.0/snli_1.0_test.jsonl') as reader:
-        for obj in reader:
-            read = reader.read(dict)
-
-            correctLabel = labels[read["annotator_labels"][0]]
-
-            (result, certanty) = model.predict(read["sentence1"])
-            if result[0] == correctLabel:
-                correct += 1
-
-            total += 1
-
-    print(correct/total)
+    print(model.test("./.data/test.txt"))
