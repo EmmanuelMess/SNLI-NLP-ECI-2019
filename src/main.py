@@ -66,8 +66,8 @@ def recreate():
     processDataFile("./.data/dev.txt", dev_data_source, dev_labels_source)
 
 if __name__ == '__main__':
-    recreate_model = True
-    print_wrong_sentences = False
+    recreate_model = False
+    print_wrong_sentences = True
 
     if recreate_model:
         recreate()
@@ -79,10 +79,12 @@ if __name__ == '__main__':
             for line in file:
                 correctLabel, sentence = line[:line.find(" ")], line[line.find(" "):].strip()
 
-                result = model.predict(sentence, k=1)[0][0]
+                resultTuple = model.predict(sentence, k=1)
+                result = resultTuple[0][0]
+                resultConfidence = resultTuple[1][0]*100
 
                 if result != correctLabel:
-                    print("'{}': chose {} but was {}".format(sentence, inverse_labels[result], inverse_labels[correctLabel]))
+                    print("'{}': chose {} with {}% confidence but was {}".format(sentence, inverse_labels[result], resultConfidence, inverse_labels[correctLabel]))
 
     else:
         print(model.test("./.data/dev.txt"))
