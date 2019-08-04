@@ -15,12 +15,12 @@ def main():
         label_data = open(args.labels, 'r')
         for sentence, label in zip(it_sentences(sentence_data), it_labels(label_data)):
             # Tenemos la oración en sentence con su categoría en label
-            #print(label, sentence)
+            print(label, sentence)
             pass
     else:
         for sentence in it_sentences(sentence_data):
             # Tenemos una oración en sentence
-            #print(sentence)
+            print(sentence)
             pass
     
 

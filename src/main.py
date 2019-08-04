@@ -2,40 +2,56 @@ import multiprocessing
 import os
 
 import fasttext
-import jsonlines
 
-from torchtext import datasets
+import json
+import csv
 
-labels = {"neutral": "__label__0", "contradiction": "__label__1", "entailment": "__label__2"}
+labels = {"neutral": "__label__0", "contradiction": "__label__1",
+             "entailment": "__label__2"}
 
 
-def processDataFile(resultPath, sourcePath):
+def it_sentences(sentence_data):
+    for line in sentence_data:
+        example = json.loads(line)
+        yield example['sentence2']
+
+
+def it_labels(label_data):
+    label_data_reader = csv.DictReader(label_data)
+    for example in label_data_reader:
+        yield example['gold_label']
+
+
+def processDataFile(resultPath, data_source, labels_source):
     with open(resultPath, "w") as file:
-        with jsonlines.open(sourcePath) as reader:
-            for obj in reader:
-                read = reader.read(dict)
-                file.write(labels[read["annotator_labels"][0]] + " " + read["sentence2"] + "\n")
+        sentence_data = open(data_source, 'r')
+        label_data = open(labels_source, 'r')
+
+        for sentence, label in zip(it_sentences(sentence_data), it_labels(label_data)):
+            file.write(labels[label] + " " + sentence + "\n")
 
 
 def recreate():
-    datasets.SNLI.download(".data")
+    data_source = '.data/snli/snli_1.0/snli_1.0_train_filtered.jsonl'
+    labels_source = '.data/snli/snli_1.0/snli_1.0_train_gold_labels.csv'
 
     dataFile = "./.data/data.txt"
 
-    processDataFile(dataFile, '.data/snli/snli_1.0/snli_1.0_train.jsonl')
+    processDataFile(dataFile, data_source, labels_source)
 
     model = fasttext.train_supervised(
-        dataFile,
-        #lr=1,
+        input=dataFile,
+        #lr=1.0,
         dim=325,
         #ws=5,
-        epoch=10,
-        #minCount=1,
+        epoch=25,
+        #verbose=2,
+        minCount=1,
         #minCountLabel=1,
         #minn=0,
         #maxn=0,
         #neg=5,
-        #wordNgrams=1,
+        wordNgrams=2,
         #loss="softmax",
         #bucket=2000000,
         thread=multiprocessing.cpu_count(),
@@ -53,6 +69,9 @@ if __name__ == '__main__':
 
     model = fasttext.load_model("./.data/model_filename.bin")
 
-    processDataFile("./.data/test.txt", '.data/snli/snli_1.0/snli_1.0_test.jsonl')
+    data_source = '.data/snli/snli_1.0/snli_1.0_dev_filtered.jsonl'
+    labels_source = '.data/snli/snli_1.0/snli_1.0_dev_gold_labels.csv'
 
-    print(model.test("./.data/test.txt"))
+    processDataFile("./.data/dev.txt", data_source, labels_source)
+
+    print(model.test("./.data/dev.txt"))
