@@ -6,14 +6,14 @@ import fasttext
 import json
 import csv
 
-labels = {"neutral": "__label__0", "contradiction": "__label__1",
-             "entailment": "__label__2"}
+labels = {"neutral": "__label__0", "contradiction": "__label__1", "entailment": "__label__2"}
+inverse_labels = {v: k for k, v in labels.items()}
 
 
 def it_sentences(sentence_data):
     for line in sentence_data:
         example = json.loads(line)
-        yield example['sentence2']
+        yield example['sentence2_parse']
 
 
 def it_labels(label_data):
@@ -66,11 +66,23 @@ def recreate():
     processDataFile("./.data/dev.txt", dev_data_source, dev_labels_source)
 
 if __name__ == '__main__':
-    createPath = ".data/.created"
-    if not os.path.isfile(createPath):
-        #open(createPath, "w")
+    recreate_model = True
+    print_wrong_sentences = False
+
+    if recreate_model:
         recreate()
 
     model = fasttext.load_model("./.data/model_filename.bin")
 
-    print(model.test("./.data/dev.txt"))
+    if print_wrong_sentences:
+        with open("./.data/dev.txt", "r") as file:
+            for line in file:
+                correctLabel, sentence = line[:line.find(" ")], line[line.find(" "):].strip()
+
+                result = model.predict(sentence, k=1)[0][0]
+
+                if result != correctLabel:
+                    print("'{}': chose {} but was {}".format(sentence, inverse_labels[result], inverse_labels[correctLabel]))
+
+    else:
+        print(model.test("./.data/dev.txt"))
