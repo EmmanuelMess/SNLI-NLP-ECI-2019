@@ -32,12 +32,12 @@ def processDataFile(resultPath, data_source, labels_source):
 
 
 def recreate():
-    data_source = '.data/snli/snli_1.0/snli_1.0_train_filtered.jsonl'
-    labels_source = '.data/snli/snli_1.0/snli_1.0_train_gold_labels.csv'
+    train_data_source = '.data/snli/snli_1.0/snli_1.0_train_filtered.jsonl'
+    train_labels_source = '.data/snli/snli_1.0/snli_1.0_train_gold_labels.csv'
 
     dataFile = "./.data/data.txt"
 
-    processDataFile(dataFile, data_source, labels_source)
+    processDataFile(dataFile, train_data_source, train_labels_source)
 
     model = fasttext.train_supervised(
         input=dataFile,
@@ -60,6 +60,10 @@ def recreate():
     )
     model.save_model("./.data/model_filename.bin")
 
+    dev_data_source = '.data/snli/snli_1.0/snli_1.0_dev_filtered.jsonl'
+    dev_labels_source = '.data/snli/snli_1.0/snli_1.0_dev_gold_labels.csv'
+
+    processDataFile("./.data/dev.txt", dev_data_source, dev_labels_source)
 
 if __name__ == '__main__':
     createPath = ".data/.created"
@@ -68,10 +72,5 @@ if __name__ == '__main__':
         recreate()
 
     model = fasttext.load_model("./.data/model_filename.bin")
-
-    data_source = '.data/snli/snli_1.0/snli_1.0_dev_filtered.jsonl'
-    labels_source = '.data/snli/snli_1.0/snli_1.0_dev_gold_labels.csv'
-
-    processDataFile("./.data/dev.txt", data_source, labels_source)
 
     print(model.test("./.data/dev.txt"))
