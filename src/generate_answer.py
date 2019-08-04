@@ -41,5 +41,5 @@ def it_labels(label_data):
 
 
 
-
-main()
+if __name__ == '__main__':
+    main()
