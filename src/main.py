@@ -85,7 +85,7 @@ if __name__ == '__main__':
                 #print(correctLabel)
                 result = resultTuple[0][0]
                 resultConfidence = resultTuple[1][0]*100
-                if resultConfidence < 60:
+                if resultConfidence < 0:
                     result = "__label__0"
                 if result != correctLabel:
                     total += 1
