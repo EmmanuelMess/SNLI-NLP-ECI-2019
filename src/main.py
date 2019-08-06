@@ -6,8 +6,10 @@ import fasttext
 import json
 import csv
 
-labels = {"neutral": "__label__0", "contradiction": "__label__1", "entailment": "__label__2"}
+labels = {"neutral": "__label__0", "contradiction": "__label__1",
+          "entailment": "__label__2"}
 inverse_labels = {v: k for k, v in labels.items()}
+
 
 def it_sentences(sentence_data):
     for line in sentence_data:
@@ -26,8 +28,8 @@ def processDataFile(resultPath, data_source, labels_source):
         sentence_data = open(data_source, 'r')
         label_data = open(labels_source, 'r')
 
-        for sentence, label in zip(it_sentences(sentence_data), 
-                                    it_labels(label_data)):
+        for sentence, label in zip(it_sentences(sentence_data),
+                                   it_labels(label_data)):
             file.write(labels[label] + " " + sentence + "\n")
 
 
@@ -41,29 +43,30 @@ def recreate():
 
     model = fasttext.train_supervised(
         input=dataFile,
-        #lr=1.0,
+        lr=1.0,
         dim=325,
-        #ws=5,
+        # ws=5,
         epoch=25,
         verbose=2,
         minCount=1,
-        #minCountLabel=1,
-        #minn=0,
-        #maxn=0,
-        #neg=5,
-        wordNgrams=2,
-        #loss="softmax",
-        #bucket=2000000,
+        # minCountLabel=1,
+        # minn=0,
+        # maxn=0,
+        # neg=5,
+        wordNgrams=5,
+        loss="softmax",
+        # bucket=2000000,
         thread=multiprocessing.cpu_count(),
-        #lrUpdateRate=100,
-        #t=0.0001
+        # lrUpdateRate=100,
+        # t=0.0001
     )
     model.save_model("./.data/model_filename.bin")
 
-if __name__ == '__main__':
-    recreate_model = False
-    print_wrong_sentences = True
 
+if __name__ == '__main__':
+    recreate_model = True
+    print_wrong_sentences = True
+    test_model = True
     if recreate_model:
         recreate()
 
@@ -78,11 +81,12 @@ if __name__ == '__main__':
     if print_wrong_sentences:
         with open("./.data/dev.txt", "r") as file:
             for line in file:
-                correctLabel, sentence = line[:line.find(" ")], line[line.find(" "):].strip()
+                correctLabel, sentence = line[:line.find(" ")],\
+                    line[line.find(" "):].strip()
 
                 resultTuple = model.predict(sentence, k=1)
-                #print(resultTuple)
-                #print(correctLabel)
+                # print(resultTuple)
+                # print(correctLabel)
                 result = resultTuple[0][0]
                 resultConfidence = resultTuple[1][0]*100
                 if resultConfidence < 0:
@@ -90,11 +94,14 @@ if __name__ == '__main__':
                 if result != correctLabel:
                     total += 1
                     partial[inverse_labels[correctLabel]] += 1
-                    #print("'{}': chose {} with {}% confidence but was {}".format(sentence, inverse_labels[result], resultConfidence, inverse_labels[correctLabel]))
+                    # print("'{}': chose {} with {}% confidence but was {}"
+                    #       .format(sentence, inverse_labels[result],
+                    #               resultConfidence,
+                    #               inverse_labels[correctLabel]))
 
-            print('Mistakes:',total)
-            for k,v in labels.items():
+            print('Mistakes:', total)
+            for k, v in labels.items():
                 print("{}: {} times".format(k, partial[k]))
 
-    else:
+    if test_model:
         print(model.test("./.data/dev.txt"))
