@@ -14,7 +14,9 @@ inverse_labels = {v: k for k, v in labels.items()}
 def it_sentences(sentence_data):
     for line in sentence_data:
         example = json.loads(line)
-        yield example['sentence2_binary_parse'] # sentence_2 and sentence2_binary_parse
+        text = example['sentence2']
+        binary = example['sentence2_binary_parse']
+        yield (text + binary) # sentence_2 and sentence2_binary_parse
 
 
 def it_labels(label_data):
