@@ -1,5 +1,7 @@
 \documentclass{article}
 
+\usepackage{spverbatim}
+
 \usepackage[utf8x]{inputenc}%%permite acentos y otras bobadas
 \usepackage[T1]{fontenc}%%hace que letras con acento sean una sola
 
@@ -19,11 +21,37 @@
     \end{titlepage}
 	
 	\section*{Preliminar}
-	El paper propone el uso de "fasttext" el clasificador lineal de Facebook\cite{joulin2017bag}. Que usamos para
+	El paper propone el uso de "fasttext" el clasificador lineal de Facebook\cite{joulin2017bag}. Una primera implementación da una clasificación correcta del 64\%. Que permite empezar ya a apreciar una marcada diferencia con el 33\% que "deberia" ser para un dataset que no tiene ningun tipo de informacion en la hipotesis.
+	
+	\section*{Primeras optimizaciones}
+	Tomando vectores de largo 325 (buscado por descenso del gradiente) y tomando información de las palabras circundantes (con bigramas\cite{bigrams}), se logra un puntaje de 66\%.
+	
+	\section*{Optimización por etiquetación sintáctica}
+	Hasta ahora usamos simplemente la oración para clasificar. Sin embargo si tomamos la oración y le agregamos un arbol binario con la separación sintatica:
+	\begin{spverbatim}
+		The sisters are hugging goodbye while holding to go packages after just eating lunch. ( ( The sisters ) ( ( are ( ( hugging goodbye ) ( while ( holding ( to ( ( go packages ) ( after ( just ( eating lunch ) ) ) ) ) ) ) ) ) . ) )
+	\end{spverbatim}
+	\medskip
+	Se obtiene un puntaje de 67\%, mayor que con solo el árbol o la oración.\\
+	Valga aclarar que si bien se tiene una separación sintáctica que de hecho contiene la información de que es cada nodo en el arbol:
+	\begin{spverbatim}
+		(ROOT (S (NP (DT A) (NN person)) (VP (VBZ is) (VP (VBG training) (NP (PRP\$ his) (NN horse)) (PP (IN for) (NP (DT a) (NN competition))))) (. .)))
+	\end{spverbatim}
+	\medskip
+	Usar esta versión empeora el puntaje.
+	
+	\section*{Explicación teórica}
+	Supongamos que se tienen cuatro oraciones, una premisa y tres hipotesis. Ahora bien, sabemos por la creación del SNLI\cite{snli} que cada hipótesis esta relacionada con la premisa por un contexto. Si bien no se puede afirmar que el contexto sea enteramente deducible de todas las hipótesis, se puede afirmar que el contexto influeció de forma casi unica a los contenidos de la oración.
 	
 	\newpage
 	\begin{thebibliography}{9}
 		\bibitem{joulin2017bag} 
 		A. Joulin, E. Grave, P. Bojanowski, T. Mikolov. \textit{Bag of Tricks for Efficient Text Classification}. Association for Computational Linguistics, 2017
+		
+		\bibitem{bigrams} 
+		Sida WangandChristopher D. Manning. \textit{Baselines and Bigrams: Simple, Good Sentiment and Topic Classification}. Stanford University, Department of Computer Science, 2018
+		
+		\bibitem{snli} 
+		Samuel R. Bowman, Gabor Angeli, Christopher Potts, and Christopher D. Manning. 2015.\textit{A large annotated corpus for learning natural language inference}. In Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing (EMNLP). 
 	\end{thebibliography}
 \end{document}
