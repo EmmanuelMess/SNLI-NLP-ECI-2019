@@ -112,6 +112,8 @@ if __name__ == '__main__':
     recreate_model = False
     print_wrong_sentences = False
     test_model = True
+    grid_search = True
+
     if recreate_model:
         recreate()
     
@@ -130,8 +132,8 @@ if __name__ == '__main__':
     devFile = "./.data/dev.txt"
 
     processDataFile(devFile, dev_data_source, dev_labels_source)
-    
-    GridSearch(dataFile, devFile)
+    if grid_search:
+        GridSearch(dataFile, devFile)
 
     model = fasttext.load_model("./.data/best_model.bin")
     
