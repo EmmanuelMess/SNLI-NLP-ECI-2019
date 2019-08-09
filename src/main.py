@@ -66,45 +66,47 @@ def recreate():
 
 def GridSearch(dataFile, testFile):
 
-    epoch = (5 10 15 20 25 30 35 40 45 50)
-    lr = (0.2 0.4 0.6 0.8 1.0)
-    wordNgrams = (1 2 3 4 5)
-    dim = (50 100 150 200 250 300 350 400 450 500)
+    epoch = (5, 10, 15, 20, 25, 30, 35, 40, 45, 50)
+    lr = (0.2, 0.4, 0.6, 0.8, 1.0)
+    wordNgrams = (1, 2, 3, 4, 5)
+    dim = (50, 100, 150, 200, 250, 300, 350, 400, 450, 500)
     
-    final=(0 0 0)
-    performance=0
-
-    for z in epoch:
-        for y in lr:
-            for x in wordNgrams:
-                for d in dim:
-                    model = fasttext.train_supervised(
-                            input=dataFile,
-                            lr = y,
-                            dim = d,
-                            # ws=5,
-                            epoch= z,
-                            verbose = 2,
-                            minCount = 1,
-                            # minCountLabel=1,
-                            # minn=0,
-                            # maxn=0,
-                            # neg=5,
-                            wordNgrams= x,
-                            loss="softmax",
-                            # bucket=2000000,
-                            thread = multiprocessing.cpu_count(),
-                            # lrUpdateRate=100,
-                            # t=0.0001
-                            )
-                    result = model.test("./.data/dev.txt")
-                    print("result is {} and final is {} ".format(result, final))
-                    if result > final:
-                        print(result, 'is better than', final)
-                        final = result
-                        print("final is {}".format(final))
-                        print("save model ...")
-                        model.save_model("./.data/best_model.bin")
+    final=(0, 0, 0)
+    with open("./.data/results.txt", "w") as file:
+        for z in epoch:
+            for y in lr:
+                for x in wordNgrams:
+                    for d in dim:
+                        model = fasttext.train_supervised(
+                                input=dataFile,
+                                lr = y,
+                                dim = d,
+                                # ws=5,
+                                epoch= z,
+                                verbose = 2,
+                                minCount = 1,
+                                # minCountLabel=1,
+                                # minn=0,
+                                # maxn=0,
+                                # neg=5,
+                                wordNgrams= x,
+                                loss="softmax",
+                                # bucket=2000000,
+                                thread = multiprocessing.cpu_count(),
+                                # lrUpdateRate=100,
+                                # t=0.0001
+                                )
+                        result = model.test("./.data/dev.txt")
+                        print("result is {} and final is {} ".format(result, final))
+                        if result > final:
+                            print(result, 'is better than', final)
+                            final = result
+                            print("final is {}".format(final))
+                            print("save model ...")
+                            model.save_model("./.data/best_model.bin")
+                            line = " with epoch: {}, lr: {}, wordNgrams:{}, \
+                                     dim: {} \n".format(z, y, x, d)
+                            file.write(final + line)
 
 if __name__ == '__main__':
     recreate_model = False
