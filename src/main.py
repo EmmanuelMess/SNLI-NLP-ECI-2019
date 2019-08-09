@@ -77,11 +77,12 @@ if __name__ == '__main__':
 
         for sentence in it_sentences(sentence_data):
             output_labels.write("__label__" + inverse_labels[model.predict(sentence, k=1)[0][0]] + "\n")
-
+        output_labels.close()
+        
         generate()
     else:
-        recreate_model = True
-        print_wrong_sentences = True
+        recreate_model = False
+        print_wrong_sentences = False
         test_model = True
         if recreate_model:
             recreate()
