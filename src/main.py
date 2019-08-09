@@ -64,23 +64,78 @@ def recreate():
     )
     model.save_model("./.data/model_filename.bin")
 
+def GridSearch(dataFile, testFile):
+
+    epoch = (5 10 15 20 25 30 35 40 45 50)
+    lr = (0.2 0.4 0.6 0.8 1.0)
+    wordNgrams = (1 2 3 4 5)
+    dim = (50 100 150 200 250 300 350 400 450 500)
+    
+    final=(0 0 0)
+    performance=0
+
+    for z in epoch:
+        for y in lr:
+            for x in wordNgrams:
+                for d in dim:
+                    model = fasttext.train_supervised(
+                            input=dataFile,
+                            lr = y,
+                            dim = d,
+                            # ws=5,
+                            epoch= z,
+                            verbose = 2,
+                            minCount = 1,
+                            # minCountLabel=1,
+                            # minn=0,
+                            # maxn=0,
+                            # neg=5,
+                            wordNgrams= x,
+                            loss="softmax",
+                            # bucket=2000000,
+                            thread = multiprocessing.cpu_count(),
+                            # lrUpdateRate=100,
+                            # t=0.0001
+                            )
+                    result = model.test("./.data/dev.txt")
+                    print("result is {} and final is {} ".format(result, final))
+                    if result > final:
+                        print(result, 'is better than', final)
+                        final = result
+                        print("final is {}".format(final))
+                        print("save model ...")
+                        model.save_model("./.data/best_model.bin")
 
 if __name__ == '__main__':
-    recreate_model = True
-    print_wrong_sentences = True
+    recreate_model = False
+    print_wrong_sentences = False
     test_model = True
     if recreate_model:
         recreate()
-
+    
+    # Create train file 
+    train_data_source = '.data/snli/snli_1.0/snli_1.0_train_filtered.jsonl'
+    train_labels_source = '.data/snli/snli_1.0/snli_1.0_train_gold_labels.csv'
+    
+    dataFile = "./.data/train.txt"
+    
+    processDataFile(dataFile, train_data_source, train_labels_source)
+    
+    # Create dev file
     dev_data_source = '.data/snli/snli_1.0/snli_1.0_dev_filtered.jsonl'
     dev_labels_source = '.data/snli/snli_1.0/snli_1.0_dev_gold_labels.csv'
+    
+    devFile = "./.data/dev.txt"
 
-    processDataFile("./.data/dev.txt", dev_data_source, dev_labels_source)
+    processDataFile(devFile, dev_data_source, dev_labels_source)
+    
+    GridSearch(dataFile, devFile)
 
-    model = fasttext.load_model("./.data/model_filename.bin")
-    total = 0
-    partial = {"neutral": 0, "contradiction": 0, "entailment": 0}
+    model = fasttext.load_model("./.data/best_model.bin")
+    
     if print_wrong_sentences:
+        total = 0
+        partial = {"neutral": 0, "contradiction": 0, "entailment": 0}
         with open("./.data/dev.txt", "r") as file:
             for line in file:
                 correctLabel, sentence = line[:line.find(" ")],\
@@ -106,4 +161,5 @@ if __name__ == '__main__':
                 print("{}: {} times".format(k, partial[k]))
 
     if test_model:
-        print(model.test("./.data/dev.txt"))
+        result = model.test(devFile)
+        print(model.test(devFile))
