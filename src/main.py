@@ -5,6 +5,7 @@ import fasttext
 
 import json
 import csv
+from zipfile import ZipFile
 
 from generate_answer import generate
 
@@ -12,6 +13,8 @@ labels = {"neutral": "__label__0", "contradiction": "__label__1",
           "entailment": "__label__2"}
 inverse_labels = {v: k for k, v in labels.items()}
 
+def download(data_path,file):
+    kaggle.api.competition_download_file('eci2019nlp',file, path=data_path)
 
 def it_sentences(sentence_data):
     for line in sentence_data:
@@ -38,8 +41,8 @@ def processDataFile(resultPath, data_source, labels_source):
 
 
 def recreate():
-    train_data_source = '.data/snli/snli_1.0/snli_1.0_train_filtered.jsonl'
-    train_labels_source = '.data/snli/snli_1.0/snli_1.0_train_gold_labels.csv'
+    train_data_source = '.data/snli_1.0_train_filtered.jsonl'
+    train_labels_source = '.data/snli_1.0_train_gold_labels.csv'
 
     dataFile = "./.data/data.txt"
 
@@ -68,27 +71,48 @@ def recreate():
 
 
 if __name__ == '__main__':
+    download_data = False
     create_results = True
+    recreate_model = True
+
+    data_path = "./.data/"
+
+    dev_data_source = data_path + 'snli_1.0_dev_filtered.jsonl'
+    dev_labels_source = data_path + 'snli_1.0_dev_gold_labels.csv'
+
+    if download_data:
+        import kaggle
+
+        for file in ('snli_1.0_train_filtered.jsonl',
+             'snli_1.0_train_gold_labels.csv',
+             'snli_1.0_dev_filtered.jsonl',
+             'snli_1.0_dev_gold_labels.csv',
+             'snli_1.0_test_filtered.jsonl'):
+            download(data_path,file)   
+            for item in os.listdir(data_path):
+                print(item)
+                if item.endswith('.zip'):
+                    file_name = data_path+item
+                    zip_ref = ZipFile(file_name) # create zipfile object
+                    zip_ref.extractall(data_path) # extract file to dir
+                    zip_ref.close() # close file
+                    os.remove(file_name) # delete zipped file
+
+    if recreate_model:
+        recreate()
 
     if create_results:
-        sentence_data = open(".data/snli/snli_1.0/snli_1.0_test_filtered.jsonl", 'r')
-        with open(".data/test_cls.txt", 'w') as output_labels:
-            model = fasttext.load_model("./.data/model_filename.bin")
+        sentence_data = open(".data/snli_1.0_test_filtered.jsonl", 'r')
+        model = fasttext.load_model("./.data/model_filename.bin")
 
+        with open(".data/test_cls.txt", 'w') as output_labels:
             for sentence in it_sentences(sentence_data):
                 output_labels.write("__label__" + inverse_labels[model.predict(sentence, k=1)[0][0]] + "\n")
 
         generate()
     else:
-        recreate_model = False
         print_wrong_sentences = True
         test_model = True
-
-        if recreate_model:
-            recreate()
-
-        dev_data_source = '.data/snli/snli_1.0/snli_1.0_dev_filtered.jsonl'
-        dev_labels_source = '.data/snli/snli_1.0/snli_1.0_dev_gold_labels.csv'
 
         model = fasttext.load_model("./.data/model_filename.bin")
         partial = {"neutral": 0, "contradiction": 0, "entailment": 0}
@@ -102,8 +126,6 @@ if __name__ == '__main__':
             for sentence, correctLabelRaw in zip(it_sentences(sentence_data), it_labels(label_data)):
                 correctLabel = labels[correctLabelRaw]
                 resultTuple = model.predict(sentence, k=1)
-                # print(resultTuple)
-                # print(correctLabel)
                 result = resultTuple[0][0]
                 resultConfidence = resultTuple[1][0]*100
                 total += 1
