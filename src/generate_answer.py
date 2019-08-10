@@ -8,7 +8,7 @@ def generate():
         " y los resultados de la clasificación de tu algoritmo (en tu formato)"
         " en un archivo csv compatible con el formato de Kaggle"
     
-        sentences_filename = ".data/snli_1.0/snli_1.0_test_filtered.jsonl"
+        sentences_filename = ".data/snli_1.0_test_filtered.jsonl"
         labels_filename = ".data/test_cls.txt"
         output_filename = "result.csv"
     

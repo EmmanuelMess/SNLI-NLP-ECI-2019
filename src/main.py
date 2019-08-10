@@ -125,8 +125,6 @@ if __name__ == '__main__':
                     line[line.find(" "):].strip()
 
                 resultTuple = model.predict(sentence, k=1)
-                # print(resultTuple)
-                # print(correctLabel)
                 result = resultTuple[0][0]
                 resultConfidence = resultTuple[1][0]*100
                 if resultConfidence < 0:
