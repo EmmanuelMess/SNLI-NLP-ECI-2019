@@ -68,7 +68,7 @@ def recreate():
 
 
 if __name__ == '__main__':
-    create_results = True
+    create_results = False
 
     if create_results:
         sentence_data = open(".data/snli/snli_1.0/snli_1.0_test_filtered.jsonl", 'r')
@@ -80,44 +80,46 @@ if __name__ == '__main__':
 
         generate()
     else:
-        recreate_model = True
+        recreate_model = False
         print_wrong_sentences = True
-        test_model = True
+        test_model = False
         if recreate_model:
             recreate()
 
         dev_data_source = '.data/snli/snli_1.0/snli_1.0_dev_filtered.jsonl'
         dev_labels_source = '.data/snli/snli_1.0/snli_1.0_dev_gold_labels.csv'
 
-        processDataFile("./.data/dev.txt", dev_data_source, dev_labels_source)
-
         model = fasttext.load_model("./.data/model_filename.bin")
-        total = 0
         partial = {"neutral": 0, "contradiction": 0, "entailment": 0}
         if print_wrong_sentences:
-            with open("./.data/dev.txt", "r") as file:
-                for line in file:
-                    correctLabel, sentence = line[:line.find(" ")],\
-                        line[line.find(" "):].strip()
+            sentence_data = open(dev_data_source, 'r')
+            label_data = open(dev_labels_source, 'r')
 
-                    resultTuple = model.predict(sentence, k=1)
-                    # print(resultTuple)
-                    # print(correctLabel)
-                    result = resultTuple[0][0]
-                    resultConfidence = resultTuple[1][0]*100
-                    if resultConfidence < 0:
-                        result = "__label__0"
-                    if result != correctLabel:
-                        total += 1
-                        partial[inverse_labels[correctLabel]] += 1
-                        # print("'{}': chose {} with {}% confidence but was {}"
-                        #       .format(sentence, inverse_labels[result],
-                        #               resultConfidence,
-                        #               inverse_labels[correctLabel]))
+            total = 0
+            totalMistakes = 0
 
-                print('Mistakes:', total)
-                for k, v in labels.items():
-                    print("{}: {} times".format(k, partial[k]))
+            for sentence, correctLabelRaw in zip(it_sentences(sentence_data), it_labels(label_data)):
+                correctLabel = labels[correctLabelRaw]
+                resultTuple = model.predict(sentence, k=1)
+                # print(resultTuple)
+                # print(correctLabel)
+                result = resultTuple[0][0]
+                resultConfidence = resultTuple[1][0]*100
+                total += 1
+                if result != correctLabel:
+                    totalMistakes += 1
+                    partial[inverse_labels[correctLabel]] += 1
+                    # print("'{}': chose {} with {}% confidence but was {}"
+                    #       .format(sentence, inverse_labels[result],
+                    #               resultConfidence,
+                    #               inverse_labels[correctLabel]))
+
+            print("Total: ", total)
+            print('Mistakes:', totalMistakes)
+            for k, v in labels.items():
+                print("{}: {} times".format(k, partial[k]))
 
         if test_model:
+            processDataFile("./.data/dev.txt", dev_data_source, dev_labels_source)
+
             print(model.test("./.data/dev.txt"))
