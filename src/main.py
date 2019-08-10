@@ -5,6 +5,8 @@ import fasttext
 
 import json
 import csv
+import kaggle
+from zipfile import ZipFile
 
 from generate_answer import generate
 
@@ -12,6 +14,8 @@ labels = {"neutral": "__label__0", "contradiction": "__label__1",
           "entailment": "__label__2"}
 inverse_labels = {v: k for k, v in labels.items()}
 
+def download(data_path,file):
+    kaggle.api.competition_download_file('eci2019nlp',file, path=data_path)
 
 def it_sentences(sentence_data):
     for line in sentence_data:
@@ -38,8 +42,8 @@ def processDataFile(resultPath, data_source, labels_source):
 
 
 def recreate():
-    train_data_source = '.data/snli/snli_1.0/snli_1.0_train_filtered.jsonl'
-    train_labels_source = '.data/snli/snli_1.0/snli_1.0_train_gold_labels.csv'
+    train_data_source = '.data/snli_1.0_train_filtered.jsonl'
+    train_labels_source = '.data/snli_1.0_train_gold_labels.csv'
 
     dataFile = "./.data/data.txt"
 
@@ -68,16 +72,35 @@ def recreate():
 
 
 if __name__ == '__main__':
+    download_data = True
     recreate_model = True
     create_results = True
     print_wrong_sentences = False
     test_model = True
 
+    data_path = "./.data/"
+    files = ('snli_1.0_train_filtered.jsonl',
+             'snli_1.0_train_gold_labels.csv',
+             'snli_1.0_dev_filtered.jsonl',
+             'snli_1.0_dev_gold_labels.csv',
+             'snli_1.0_test_filtered.jsonl')
+    if download_data:
+        for file in files:
+            download(data_path,file)   
+            for item in os.listdir(data_path):
+                print(item)
+                if item.endswith('.zip'):
+                    file_name = data_path+item
+                    zip_ref = ZipFile(file_name) # create zipfile object
+                    zip_ref.extractall(data_path) # extract file to dir
+                    zip_ref.close() # close file
+                    os.remove(file_name) # delete zipped file
+
     if recreate_model:
         recreate()
 
     if create_results:
-        sentence_data = open(".data/snli/snli_1.0/snli_1.0_test_filtered.jsonl", 'r')
+        sentence_data = open(".data/snli_1.0_test_filtered.jsonl", 'r')
         output_labels = open(".data/test_cls.txt", 'w')
         model = fasttext.load_model("./.data/model_filename.bin")
 
@@ -87,8 +110,8 @@ if __name__ == '__main__':
         
         generate()
 
-    dev_data_source = '.data/snli/snli_1.0/snli_1.0_dev_filtered.jsonl'
-    dev_labels_source = '.data/snli/snli_1.0/snli_1.0_dev_gold_labels.csv'
+    dev_data_source = data_path + 'snli_1.0_dev_filtered.jsonl'
+    dev_labels_source = data_path + 'snli_1.0_dev_gold_labels.csv'
 
     processDataFile("./.data/dev.txt", dev_data_source, dev_labels_source)
 
