@@ -68,6 +68,7 @@ def recreate():
 
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     create_results = True
 
     if create_results:
@@ -90,6 +91,7 @@ if __name__ == '__main__':
         dev_data_source = '.data/snli/snli_1.0/snli_1.0_dev_filtered.jsonl'
         dev_labels_source = '.data/snli/snli_1.0/snli_1.0_dev_gold_labels.csv'
 
+<<<<<<< HEAD
         processDataFile("./.data/dev.txt", dev_data_source, dev_labels_source)
 
         model = fasttext.load_model("./.data/model_filename.bin")
