@@ -1,13 +1,33 @@
 \documentclass{article}
 
-\usepackage[utf8x]{inputenc}%%permite acentos y otras bobadas
+\usepackage{spverbatim}
+\usepackage[spanish]{babel}
+\AtBeginDocument{\selectlanguage{spanish}}
+
+\usepackage[utf8]{inputenc}%%permite acentos y otras bobadas
 \usepackage[T1]{fontenc}%%hace que letras con acento sean una sola
 
-\title{Escuela de las Ciencias Informáticas 2019\\
+\usepackage{hyperref}
+\PassOptionsToPackage{hyphens}{url}\usepackage{hyperref}
+\def\UrlBreaks{\do\/\do-}
+\hypersetup{
+       pdfborder = {0 0 0},
+       colorlinks = true,
+       linkcolor = blue,
+       citecolor = blue,
+       urlcolor = cyan,
+       pdfmenubar = true,
+       pdfnewwindow = true,
+       pdfencoding  = unicode,
+       pdfauthor = {Messulam, Gatti},
+       pdftitle = {TP_NLP_ECI2019}
+}
+
+\title{Escuela de Ciencias Informáticas 2019\\
 	{\small{Curso M1}}\\
 	Procesamiento del lenguaje natural mediante redes neuronales\\
 	{\small{Trabajo practico: replicación de los resultados del paper}}\\
-	"Annotation Artifacts in Natural Language Inference Data"\footnote{https://www.aclweb.org/anthology/N18-2017}}
+	\href{https://www.aclweb.org/anthology/N18-2017}{"Annotation Artifacts in Natural Language Inference Data"}}
 \author{Facundo Emmanuel Messulam\footnote{Facultad de Ciencias Exactas, Ingeniería y Agrimensura, Licenciatura en Ciencias de la Computación}
 	\and
 	Ramiro Hernán Gatti\footnote{Instituto de Investigación y Desarrollo en Bioingeniería y Bioinformática, CONICET-UNER}}
@@ -19,11 +39,39 @@
     \end{titlepage}
 	
 	\section*{Preliminar}
-	El paper propone el uso de "fasttext" el clasificador lineal de Facebook\cite{joulin2017bag}. Que usamos para
+	Uno de los datases mas famosos para estudiar la inferencia dentro del Lenguaje Natural es el \href{https://nlp.stanford.edu/projects/snli/}{'The Stanford Natural Language Inference (SNLI) Corpus'}. El mismo consiste de una serie frases que corresponden a una premisa (A) y su respectiva hipótesis (B). Dada A se deriva B que puede ser una implicación (\textit{'entailment'}), contradictorio (\textit{'contradiction'}) o neutral  (\textit{'neutral'}) respecto de A. En el trabajo de Jouling y otros \cite{joulin2017bag} se muestra que un sesgo en el dataset permite clasificar las hipótesis sin necesidad de la premisa utilizando el clasificador de Facebook \textit{'fasttext'}. 
+	
+	En el presente trabajo se busca replicar y mejorar el resultado obtenido por Jouling y otros \cite{joulin2017bag}. Una primera implementación utilizando \textit{'fasttext'} con los parámetros por defecto, permite obtener una clasificación con valor predictivo positivo (VPP) y tasa de verdaderos positivos (TVP) del 64\% en los datos de validación. La cual se encuentra marcadamente por encima de la tasa teórica de clasificación al azar para 3 clases de 33\%, aproximadamente el resultado esperado para un dataset que no tiene ningún tipo de información sobre la premisa.
+	
+	\section*{Primeras optimizaciones}
+	En una primera optimización se eligió transformar las palabras a vectores de 325 dimensiones y tener en cuenta la información de las palabras circundantes por medio de bigrmas \cite{bigrams}). De esta forma se logra obtener valores de VPP y TVP cercanos 66\% en los datos de validación.
+	
+	\section*{Optimización por etiquetación sintáctica}
+	Hasta el momento se utilizó simplemente la oración para clasificar. Sin embargo, al tomar como entrada del clasificador la oración y el árbol binario con la separación sintáctica:
+	\begin{spverbatim}
+		The sisters are hugging goodbye while holding to go packages after just eating lunch. ( ( The sisters ) ( ( are ( ( hugging goodbye ) ( while ( holding ( to ( ( go packages ) ( after ( just ( eating lunch ) ) ) ) ) ) ) ) ) . ) )
+	\end{spverbatim}
+	\medskip
+	De esta forma se utiliza mayor información disponible dentro del dataset de entrenamiento y se obtiene valores de VPP y TVP de 67\%, mayor que con solo el árbol o la oración.\\
+	Valga aclarar que si bien se tiene una separación sintáctica, que de hecho contiene la información de que es cada nodo en el árbol:
+	\begin{spverbatim}
+		(ROOT (S (NP (DT A) (NN person)) (VP (VBZ is) (VP (VBG training) (NP (PRP\$ his) (NN horse)) (PP (IN for) (NP (DT a) (NN competition))))) (. .)))
+	\end{spverbatim}
+	\medskip
+	Usar esta versión empeora el resultado.
+	
+	\section*{Explicación teórica}
+	Supongamos que se tienen cuatro oraciones, una premisa y tres hipotesis. Ahora bien, sabemos por la creación del SNLI\cite{snli} que cada hipótesis esta relacionada con la premisa por un contexto. Si bien no se puede afirmar que el contexto sea enteramente deducible de todas las hipótesis, se puede afirmar que el contexto influenció de forma casi única a los contenidos de la oración.
 	
 	\newpage
 	\begin{thebibliography}{9}
 		\bibitem{joulin2017bag} 
 		A. Joulin, E. Grave, P. Bojanowski, T. Mikolov. \textit{Bag of Tricks for Efficient Text Classification}. Association for Computational Linguistics, 2017
+		
+		\bibitem{bigrams} 
+		Sida WangandChristopher D. Manning. \textit{Baselines and Bigrams: Simple, Good Sentiment and Topic Classification}. Stanford University, Department of Computer Science, 2018
+		
+		\bibitem{snli} 
+		Samuel R. Bowman, Gabor Angeli, Christopher Potts, and Christopher D. Manning. 2015.\textit{A large annotated corpus for learning natural language inference}. In Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing (EMNLP). 
 	\end{thebibliography}
 \end{document}

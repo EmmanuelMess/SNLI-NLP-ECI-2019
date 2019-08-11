@@ -5,11 +5,16 @@ import fasttext
 
 import json
 import csv
+from zipfile import ZipFile
+
+from generate_answer import generate
 
 labels = {"neutral": "__label__0", "contradiction": "__label__1",
           "entailment": "__label__2"}
 inverse_labels = {v: k for k, v in labels.items()}
 
+def download(data_path,file):
+    kaggle.api.competition_download_file('eci2019nlp',file, path=data_path)
 
 def it_sentences(sentence_data):
     for line in sentence_data:
@@ -35,14 +40,7 @@ def processDataFile(resultPath, data_source, labels_source):
             file.write(labels[label] + " " + sentence + "\n")
 
 
-def recreate():
-    train_data_source = '.data/snli/snli_1.0/snli_1.0_train_filtered.jsonl'
-    train_labels_source = '.data/snli/snli_1.0/snli_1.0_train_gold_labels.csv'
-
-    dataFile = "./.data/data.txt"
-
-    processDataFile(dataFile, train_data_source, train_labels_source)
-
+def recreate(dataFile):
     model = fasttext.train_supervised(
         input=dataFile,
         lr=1.0,
@@ -109,61 +107,94 @@ def GridSearch(dataFile, testFile):
                             file.write(final + line)
 
 if __name__ == '__main__':
-    recreate_model = False
+    download_data = True
+    grid_search = False
+    recreate_model = True
     print_wrong_sentences = False
     test_model = True
-    grid_search = True
+    create_results = True
+    
+    if download_data:
+    import kaggle
 
-    if recreate_model:
-        recreate()
-    
-    # Create train file 
-    train_data_source = '.data/snli/snli_1.0/snli_1.0_train_filtered.jsonl'
-    train_labels_source = '.data/snli/snli_1.0/snli_1.0_train_gold_labels.csv'
-    
-    dataFile = "./.data/train.txt"
-    
-    processDataFile(dataFile, train_data_source, train_labels_source)
-    
-    # Create dev file
-    dev_data_source = '.data/snli/snli_1.0/snli_1.0_dev_filtered.jsonl'
-    dev_labels_source = '.data/snli/snli_1.0/snli_1.0_dev_gold_labels.csv'
-    
-    devFile = "./.data/dev.txt"
+    for file in ('snli_1.0_train_filtered.jsonl',
+         'snli_1.0_train_gold_labels.csv',
+         'snli_1.0_dev_filtered.jsonl',
+         'snli_1.0_dev_gold_labels.csv',
+         'snli_1.0_test_filtered.jsonl'):
+        download(data_path,file)   
+        for item in os.listdir(data_path):
+            print(item)
+            if item.endswith('.zip'):
+                file_name = data_path+item
+                zip_ref = ZipFile(file_name) # create zipfile object
+                zip_ref.extractall(data_path) # extract file to dir
+                zip_ref.close() # close file
+                os.remove(file_name) # delete zipped file
+                
+    data_path = "./.data/"
+    if grid_search or recreate_model:
+      # Create train file 
+      train_data_source = data_path + 'snli_1.0_train_filtered.jsonl'
+      train_labels_source = data_path + 'snli_1.0_train_gold_labels.csv'
 
-    processDataFile(devFile, dev_data_source, dev_labels_source)
+      dataFile = data_path + "train.txt"
+
+      processDataFile(dataFile, train_data_source, train_labels_source)
+    
+    if print_wrong_sentences or test_model:
+      # Create dev file
+      dev_data_source = data_path + 'snli_1.0_dev_filtered.jsonl'
+      dev_labels_source = data_path + 'snli_1.0_dev_gold_labels.csv'
+
+      devFile = data_path + "dev.txt"
+
+      processDataFile(devFile, dev_data_source, dev_labels_source)
+    
     if grid_search:
         GridSearch(dataFile, devFile)
-
-    model = fasttext.load_model("./.data/best_model.bin")
+        model = fasttext.load_model("./.data/best_model.bin")
     
+    if recreate_model:
+        recreate()
+
+    if create_results:
+        sentence_data = open(".data/snli_1.0_test_filtered.jsonl", 'r')
+        model = fasttext.load_model("./.data/model_filename.bin")
+
+        with open(".data/test_cls.txt", 'w') as output_labels:
+            for sentence in it_sentences(sentence_data):
+                output_labels.write("__label__" + inverse_labels[model.predict(sentence, k=1)[0][0]] + "\n")
+                
+        generate()
+  
+    model = fasttext.load_model("./.data/model_filename.bin")
+        
     if print_wrong_sentences:
-        total = 0
+        sentence_data = open(dev_data_source, 'r')
+        label_data = open(dev_labels_source, 'r')
         partial = {"neutral": 0, "contradiction": 0, "entailment": 0}
-        with open("./.data/dev.txt", "r") as file:
-            for line in file:
-                correctLabel, sentence = line[:line.find(" ")],\
-                    line[line.find(" "):].strip()
+        total = 0
+        totalMistakes = 0
+        
+        for sentence, correctLabelRaw in zip(it_sentences(sentence_data), it_labels(label_data)):
+            correctLabel = labels[correctLabelRaw]
+            resultTuple = model.predict(sentence, k=1)
+            result = resultTuple[0][0]
+            resultConfidence = resultTuple[1][0]*100
+            total += 1
+            if result != correctLabel:
+                totalMistakes += 1
+                partial[inverse_labels[correctLabel]] += 1
+                # print("'{}': chose {} with {}% confidence but was {}"
+                #       .format(sentence, inverse_labels[result],
+                #               resultConfidence,
+                #               inverse_labels[correctLabel]))
 
-                resultTuple = model.predict(sentence, k=1)
-                # print(resultTuple)
-                # print(correctLabel)
-                result = resultTuple[0][0]
-                resultConfidence = resultTuple[1][0]*100
-                if resultConfidence < 0:
-                    result = "__label__0"
-                if result != correctLabel:
-                    total += 1
-                    partial[inverse_labels[correctLabel]] += 1
-                    # print("'{}': chose {} with {}% confidence but was {}"
-                    #       .format(sentence, inverse_labels[result],
-                    #               resultConfidence,
-                    #               inverse_labels[correctLabel]))
-
-            print('Mistakes:', total)
-            for k, v in labels.items():
-                print("{}: {} times".format(k, partial[k]))
+        print("Total: ", total)
+        print('Mistakes:', totalMistakes)
+        for k, v in labels.items():
+            print("{}: {} times".format(k, partial[k]))
 
     if test_model:
-        result = model.test(devFile)
         print(model.test(devFile))

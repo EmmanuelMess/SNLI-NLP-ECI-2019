@@ -3,13 +3,13 @@ import argparse
 import json
 import csv
 
-def main():
+def generate():
     "Junta el archivo con las oraciones de test (jsonl)"
     " y los resultados de la clasificación de tu algoritmo (en tu formato)"
     " en un archivo csv compatible con el formato de Kaggle"
 
-    sentences_filename = "snli_1.0/snli_1.0_test_filtered.jsonl"
-    labels_filename = "test_cls.txt"
+    sentences_filename = ".data/snli_1.0_test_filtered.jsonl"
+    labels_filename = ".data/test_cls.txt"
     output_filename = "result.csv"
 
     with open(output_filename, 'w') as fout:
@@ -39,7 +39,3 @@ def it_labels(label_data):
         label = label.rstrip('\n')  # sacamos el fin de linea
         yield label
 
-
-
-if __name__ == '__main__':
-    main()
