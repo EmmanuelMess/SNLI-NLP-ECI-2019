@@ -65,10 +65,10 @@ def recreate(dataFile):
 
 def GridSearch(dataFile, testFile):
 
-    epoch = (5, 10, 15, 20, 25, 30, 35, 40, 45, 50)
-    lr = (0.2, 0.4, 0.6, 0.8, 1.0)
-    wordNgrams = (1, 2, 3, 4, 5)
-    dim = (50, 100, 150, 200, 250, 300, 350, 400, 450, 500)
+    epoch = (5)#, 10, 15, 20, 25, 30, 35, 40, 45, 50)
+    lr = (0.2)#, 0.4, 0.6, 0.8, 1.0)
+    wordNgrams = (1, 2)#, 3, 4, 5)
+    dim = (50)#, 100, 150, 200, 250, 300, 350, 400, 450, 500)
     
     final=(0, 0, 0)
     with open("./.data/results.txt", "w") as file:
@@ -109,11 +109,12 @@ def GridSearch(dataFile, testFile):
 
 if __name__ == '__main__':
     download_data = True
-    grid_search = False
+    grid_search = True
     recreate_model = True
     print_wrong_sentences = False
     test_model = True
     create_results = True
+    data_path = "./.data/"
     
     if download_data:
         for file in ('snli_1.0_train_filtered.jsonl',
@@ -130,7 +131,6 @@ if __name__ == '__main__':
                     zip_ref.close() # close file
                     os.remove(file_name) # delete zipped file
                 
-    data_path = "./.data/"
     if grid_search or recreate_model:
       # Create train file 
       train_data_source = data_path + 'snli_1.0_train_filtered.jsonl'
