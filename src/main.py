@@ -65,10 +65,10 @@ def recreate(dataFile):
 
 def GridSearch(dataFile, testFile):
 
-    epoch = (5)#, 10, 15, 20, 25, 30, 35, 40, 45, 50)
-    lr = (0.2)#, 0.4, 0.6, 0.8, 1.0)
+    epoch = (5, 10)#, 15, 20, 25, 30, 35, 40, 45, 50)
+    lr = (0.2, 0.4)#, 0.6, 0.8, 1.0)
     wordNgrams = (1, 2)#, 3, 4, 5)
-    dim = (50)#, 100, 150, 200, 250, 300, 350, 400, 450, 500)
+    dim = (50, 100)#, 150, 200, 250, 300, 350, 400, 450, 500)
     
     final=(0, 0, 0)
     with open("./.data/results.txt", "w") as file:
@@ -103,9 +103,9 @@ def GridSearch(dataFile, testFile):
                             print("final is {}".format(final))
                             print("save model ...")
                             model.save_model("./.data/best_model.bin")
-                            line = " with epoch: {}, lr: {}, wordNgrams:{}, \
-                                     dim: {} \n".format(z, y, x, d)
-                            file.write(final + line)
+                            line = "{} with epoch: {}, lr: {}, wordNgrams:{}, \
+                                     dim: {} \n".format(final, z, y, x, d)
+                            file.write(line)
 
 if __name__ == '__main__':
     download_data = True
@@ -129,7 +129,7 @@ if __name__ == '__main__':
                     zip_ref = ZipFile(file_name) # create zipfile object
                     zip_ref.extractall(data_path) # extract file to dir
                     zip_ref.close() # close file
-                    os.remove(file_name) # delete zipped file
+                    #os.remove(file_name) # delete zipped file
                 
     if grid_search or recreate_model:
       # Create train file 
