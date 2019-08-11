@@ -150,7 +150,7 @@ if __name__ == '__main__':
       processDataFile(devFile, dev_data_source, dev_labels_source)
     
     if grid_search:
-        GridSearch(dataFile, devFile)
+        GridSearch(trainFile, devFile)
         model = fasttext.load_model("./.data/best_model.bin")
     
     if recreate_model:
