@@ -44,10 +44,10 @@ def processDataFile(resultPath, data_source, labels_source):
 def recreate(dataFile):
     model = fasttext.train_supervised(
         input=dataFile,
-        lr=1.0,
-        dim=325,
+        lr=0.4,
+        dim=100,
         # ws=5,
-        epoch=25,
+        epoch=10,
         verbose=2,
         minCount=1,
         # minCountLabel=1,
@@ -109,11 +109,12 @@ def GridSearch(dataFile, testFile):
 
 if __name__ == '__main__':
     download_data = True
-    grid_search = True
+    grid_search = False
     recreate_model = True
     print_wrong_sentences = False
     test_model = True
     create_results = True
+
     data_path = "./.data/"
     
     if download_data:
